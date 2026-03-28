@@ -13,18 +13,53 @@ const MIN_WIDTH = 280;
 const MAX_WIDTH = 600;
 const DEFAULT_WIDTH = 360;
 
+const STORAGE_KEYS = {
+  elements: "excalidraw-converter:elements",
+  text: "excalidraw-converter:text",
+  mode: "excalidraw-converter:mode",
+} as const;
+
+function loadFromStorage<T>(key: string, fallback: T): T {
+  if (typeof window === "undefined") return fallback;
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? (JSON.parse(raw) as T) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 export function ConverterApp() {
-  const [inputMode, setInputMode] = useState<InputMode>("text");
+  const [inputMode, setInputMode] = useState<InputMode>(() =>
+    loadFromStorage<InputMode>(STORAGE_KEYS.mode, "text"),
+  );
   const [isConverting, setIsConverting] = useState(false);
-  const [elements, setElements] = useState<readonly Record<string, unknown>[]>([]);
+  const [elements, setElements] = useState<readonly Record<string, unknown>[]>(() =>
+    loadFromStorage<Record<string, unknown>[]>(STORAGE_KEYS.elements, []),
+  );
   const [error, setError] = useState<string | null>(null);
   const [summary, setSummary] = useState<string | null>(null);
   const [sidebarWidth, setSidebarWidth] = useState(DEFAULT_WIDTH);
   const isResizing = useRef(false);
 
-  const [pendingText, setPendingText] = useState<string | null>(null);
+  const [pendingText, setPendingText] = useState<string | null>(() =>
+    loadFromStorage<string | null>(STORAGE_KEYS.text, null),
+  );
   const [pendingFile, setPendingFile] = useState<{ file: File; fileName: string } | null>(null);
   const [pendingImage, setPendingImage] = useState<{ file: File; mediaType: string } | null>(null);
+
+  // Persist to localStorage
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.mode, JSON.stringify(inputMode));
+  }, [inputMode]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.elements, JSON.stringify(elements));
+  }, [elements]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.text, JSON.stringify(pendingText));
+  }, [pendingText]);
 
   // Resize handler
   useEffect(() => {
@@ -90,6 +125,9 @@ export function ConverterApp() {
   const handleTextSubmit = useCallback((text: string) => setPendingText(text), []);
   const handleFileSubmit = useCallback((file: File, fileName: string) => setPendingFile({ file, fileName }), []);
   const handleImageSubmit = useCallback((file: File, mediaType: string) => setPendingImage({ file, mediaType }), []);
+  const handleElementsChange = useCallback((updated: readonly Record<string, unknown>[]) => {
+    setElements(updated);
+  }, []);
 
   const modes: { key: InputMode; label: string; icon: typeof Type }[] = [
     { key: "text", label: "Text", icon: Type },
@@ -142,7 +180,7 @@ export function ConverterApp() {
 
         {/* Input area */}
         <div className="flex-1 overflow-y-auto px-4 py-3">
-          {inputMode === "text" && <TextInput onSubmit={handleTextSubmit} />}
+          {inputMode === "text" && <TextInput onSubmit={handleTextSubmit} initialValue={pendingText ?? ""} />}
           {inputMode === "file" && <FileUpload onSubmit={handleFileSubmit} />}
           {inputMode === "image" && <ImageUpload onSubmit={handleImageSubmit} />}
         </div>
@@ -198,7 +236,7 @@ export function ConverterApp() {
 
       {/* Right — Excalidraw editor */}
       <main className="flex-1">
-        <ExcalidrawWrapper elements={elements} />
+        <ExcalidrawWrapper elements={elements} onChange={handleElementsChange} />
       </main>
     </div>
   );

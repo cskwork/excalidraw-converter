@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import dynamic from "next/dynamic";
 import "@excalidraw/excalidraw/index.css";
 import type { ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types";
@@ -12,11 +12,13 @@ const Excalidraw = dynamic(
 
 interface ExcalidrawWrapperProps {
   elements: readonly Record<string, unknown>[];
+  onChange?: (elements: readonly Record<string, unknown>[]) => void;
 }
 
-export function ExcalidrawWrapper({ elements }: ExcalidrawWrapperProps) {
+export function ExcalidrawWrapper({ elements, onChange }: ExcalidrawWrapperProps) {
   const [excalidrawAPI, setExcalidrawAPI] =
     useState<ExcalidrawImperativeAPI | null>(null);
+  const isUpdatingFromProps = useRef(false);
 
   const handleRef = useCallback((api: ExcalidrawImperativeAPI) => {
     setExcalidrawAPI(api);
@@ -25,7 +27,7 @@ export function ExcalidrawWrapper({ elements }: ExcalidrawWrapperProps) {
   useEffect(() => {
     if (!excalidrawAPI || elements.length === 0) return;
 
-    // Excalidraw's updateScene accepts a broad element shape internally
+    isUpdatingFromProps.current = true;
     excalidrawAPI.updateScene({
       elements: elements as Parameters<
         ExcalidrawImperativeAPI["updateScene"]
@@ -35,7 +37,19 @@ export function ExcalidrawWrapper({ elements }: ExcalidrawWrapperProps) {
       elements as Parameters<ExcalidrawImperativeAPI["scrollToContent"]>[0],
       { fitToViewport: true },
     );
+    // Allow onChange to fire again after a tick
+    requestAnimationFrame(() => {
+      isUpdatingFromProps.current = false;
+    });
   }, [excalidrawAPI, elements]);
+
+  const handleChange = useCallback(
+    (updatedElements: readonly Record<string, unknown>[]) => {
+      if (isUpdatingFromProps.current || !onChange) return;
+      onChange(updatedElements);
+    },
+    [onChange],
+  );
 
   return (
     <div className="relative h-full w-full">
@@ -46,7 +60,7 @@ export function ExcalidrawWrapper({ elements }: ExcalidrawWrapperProps) {
           </p>
         </div>
       )}
-      <Excalidraw excalidrawAPI={handleRef} />
+      <Excalidraw excalidrawAPI={handleRef} onChange={handleChange} />
     </div>
   );
 }

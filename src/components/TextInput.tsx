@@ -4,10 +4,11 @@ import { useState, useCallback, useEffect } from "react";
 
 interface TextInputProps {
   onSubmit: (text: string) => void;
+  initialValue?: string;
 }
 
-export function TextInput({ onSubmit }: TextInputProps) {
-  const [text, setText] = useState("");
+export function TextInput({ onSubmit, initialValue = "" }: TextInputProps) {
+  const [text, setText] = useState(initialValue);
 
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLTextAreaElement>) => {
