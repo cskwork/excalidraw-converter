@@ -8,6 +8,9 @@ import { validateElements, autoLayout } from "@/lib/element-helpers";
 import { assertOAuthAuth } from "@/lib/assert-oauth-auth";
 import type { InputType, ExcalidrawElement } from "@/types/excalidraw";
 
+// Next.js route segment config — extend default timeout for LLM calls
+export const maxDuration = 150; // seconds
+
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const MAX_TEXT_LENGTH = 100_000; // ~100KB text cap for LLM context
 
@@ -89,6 +92,8 @@ async function buildPrompt(
   throw new Error("No valid input provided");
 }
 
+const QUERY_TIMEOUT_MS = 120_000; // 2 minute hard timeout
+
 export async function POST(request: NextRequest): Promise<NextResponse> {
   let formData: FormData;
   try {
@@ -165,28 +170,42 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const response = query({
       prompt: built.prompt,
       options: {
-        maxTurns: 3,
+        maxTurns: 1,
         allowedTools,
         permissionMode: "dontAsk",
         persistSession: false,
         model: "sonnet",
-        effort: "high",
-        maxBudgetUsd: 0.5,
+        effort: "low",
+        maxBudgetUsd: 0.25,
       },
     });
 
-    for await (const msg of response) {
-      if (msg.type === "result") {
-        if (msg.subtype === "success") {
-          resultText = msg.result;
-        } else {
-          return errorResponse(
-            `Claude Agent error: ${msg.subtype}`,
-            502,
-          );
+    // Race against timeout to prevent hanging forever
+    const result = await Promise.race([
+      (async () => {
+        for await (const msg of response) {
+          if (msg.type === "result") {
+            if (msg.subtype === "success") {
+              return { ok: true as const, text: msg.result };
+            }
+            return { ok: false as const, error: `Claude Agent error: ${msg.subtype}` };
+          }
         }
-      }
+        return { ok: false as const, error: "Claude returned no result message" };
+      })(),
+      new Promise<{ ok: false; error: string }>((resolve) =>
+        setTimeout(
+          () => resolve({ ok: false, error: "Conversion timed out after 2 minutes. Please try with simpler input." }),
+          QUERY_TIMEOUT_MS,
+        ),
+      ),
+    ]);
+
+    if (!result.ok) {
+      return errorResponse(result.error, 502);
     }
+
+    resultText = result.text;
 
     if (!resultText) {
       return errorResponse("Claude returned an empty response", 502);

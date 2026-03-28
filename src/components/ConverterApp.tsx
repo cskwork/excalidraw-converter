@@ -87,6 +87,22 @@ export function ConverterApp() {
     document.body.style.userSelect = "none";
   }, []);
 
+  const [elapsedSec, setElapsedSec] = useState(0);
+  const abortRef = useRef<AbortController | null>(null);
+
+  // Elapsed time ticker while converting
+  useEffect(() => {
+    if (!isConverting) {
+      setElapsedSec(0);
+      return;
+    }
+    const start = Date.now();
+    const timer = setInterval(() => {
+      setElapsedSec(Math.floor((Date.now() - start) / 1000));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [isConverting]);
+
   const handleConvert = useCallback(async () => {
     setError(null);
     setSummary(null);
@@ -105,9 +121,21 @@ export function ConverterApp() {
       return;
     }
 
+    // Abort any in-flight request
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
+    // Client-side timeout (130s — slightly longer than server's 120s)
+    const clientTimeout = setTimeout(() => controller.abort(), 130_000);
+
     setIsConverting(true);
     try {
-      const response = await fetch("/api/convert", { method: "POST", body: formData });
+      const response = await fetch("/api/convert", {
+        method: "POST",
+        body: formData,
+        signal: controller.signal,
+      });
       if (!response.ok) {
         const errorData = (await response.json().catch(() => null)) as { error?: string } | null;
         throw new Error(errorData?.error ?? `Conversion failed (${response.status})`);
@@ -116,9 +144,15 @@ export function ConverterApp() {
       setElements(data.elements);
       setSummary(data.summary ?? null);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "An unexpected error occurred");
+      if (err instanceof DOMException && err.name === "AbortError") {
+        setError("Conversion timed out. Try simpler or shorter input.");
+      } else {
+        setError(err instanceof Error ? err.message : "An unexpected error occurred");
+      }
     } finally {
+      clearTimeout(clientTimeout);
       setIsConverting(false);
+      abortRef.current = null;
     }
   }, [inputMode, pendingText, pendingFile, pendingImage]);
 
@@ -214,7 +248,7 @@ export function ConverterApp() {
             {isConverting ? (
               <>
                 <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                Converting...
+                Converting… {elapsedSec > 0 && `${elapsedSec}s`}
               </>
             ) : (
               <>
