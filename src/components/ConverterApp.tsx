@@ -55,13 +55,21 @@ export function ConverterApp() {
   const [summary, setSummary] = useState<string | null>(null);
   const [sidebarWidth, setSidebarWidth] = useState(DEFAULT_WIDTH);
   const isResizing = useRef(false);
-  const [theme, setTheme] = useState<ThemeMode>(getInitialTheme);
+  const [theme, setTheme] = useState<ThemeMode>("light");
+  const [themeReady, setThemeReady] = useState(false);
 
   const [pendingText, setPendingText] = useState<string | null>(() =>
     loadFromStorage<string | null>(STORAGE_KEYS.text, null),
   );
   const [pendingFile, setPendingFile] = useState<{ file: File; fileName: string } | null>(null);
   const [pendingImage, setPendingImage] = useState<{ file: File; mediaType: string } | null>(null);
+
+  // 클라이언트 hydration 후 실제 테마 적용 (SSR mismatch 방지)
+  useEffect(() => {
+    const resolved = getInitialTheme();
+    setTheme(resolved);
+    setThemeReady(true);
+  }, []);
 
   // Persist to localStorage
   useEffect(() => {
@@ -77,9 +85,10 @@ export function ConverterApp() {
   }, [pendingText]);
 
   useEffect(() => {
+    if (!themeReady) return;
     localStorage.setItem(STORAGE_KEYS.theme, JSON.stringify(theme));
     document.documentElement.setAttribute("data-theme", theme);
-  }, [theme]);
+  }, [theme, themeReady]);
 
   // Resize handler
   useEffect(() => {

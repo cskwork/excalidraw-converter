@@ -8,12 +8,10 @@ test.describe("Input Modes", () => {
   });
 
   test("default tab is Text — active style applied", async ({ page }) => {
-    // The active Text tab should have the purple bg (bg-[#6965db])
     const textTab = page.locator("button", { hasText: "Text" });
     await expect(textTab).toBeVisible();
-    // Active tab has text-white; inactive tabs have text-[#5b5b5b]
-    // Verify the Text tab is active by checking its background color via class
-    await expect(textTab).toHaveClass(/bg-\[#6965db\]/);
+    // active 탭은 is-active CSS 클래스를 가짐
+    await expect(textTab).toHaveClass(/is-active/);
   });
 
   test("switch to File tab shows drop zone", async ({ page }) => {
@@ -50,8 +48,7 @@ test.describe("Input Modes", () => {
   test("convert button is disabled without input", async ({ page }) => {
     const convertBtn = page.locator("button", { hasText: "Convert to Diagram" });
     await expect(convertBtn).toBeDisabled();
-    // Also verify the cursor-not-allowed class is present
-    await expect(convertBtn).toHaveClass(/cursor-not-allowed/);
+    await expect(convertBtn).toHaveClass(/is-disabled/);
   });
 
   test("convert button is enabled after typing text", async ({ page }) => {
