@@ -13,9 +13,10 @@ const Excalidraw = dynamic(
 interface ExcalidrawWrapperProps {
   elements: readonly Record<string, unknown>[];
   onChange?: (elements: readonly Record<string, unknown>[]) => void;
+  theme?: "light" | "dark";
 }
 
-export function ExcalidrawWrapper({ elements, onChange }: ExcalidrawWrapperProps) {
+export function ExcalidrawWrapper({ elements, onChange, theme = "light" }: ExcalidrawWrapperProps) {
   const [excalidrawAPI, setExcalidrawAPI] =
     useState<ExcalidrawImperativeAPI | null>(null);
   const isUpdatingFromProps = useRef(false);
@@ -60,7 +61,7 @@ export function ExcalidrawWrapper({ elements, onChange }: ExcalidrawWrapperProps
           </p>
         </div>
       )}
-      <Excalidraw excalidrawAPI={handleRef} onChange={handleChange} />
+      <Excalidraw excalidrawAPI={handleRef} onChange={handleChange} theme={theme} />
     </div>
   );
 }

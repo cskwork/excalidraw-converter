@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect } from "react";
-import { Sparkles, AlertCircle, Type, FileUp, ImageIcon, GripVertical } from "lucide-react";
+import { Sparkles, AlertCircle, Type, FileUp, ImageIcon, GripVertical, Sun, MoonStar } from "lucide-react";
 import { TextInput } from "./TextInput";
 import { FileUpload } from "./FileUpload";
 import { ImageUpload } from "./ImageUpload";
 import { ExcalidrawWrapper } from "./ExcalidrawWrapper";
 
 type InputMode = "text" | "file" | "image";
+type ThemeMode = "light" | "dark";
 
 const MIN_WIDTH = 280;
 const MAX_WIDTH = 600;
@@ -17,6 +18,7 @@ const STORAGE_KEYS = {
   elements: "excalidraw-converter:elements",
   text: "excalidraw-converter:text",
   mode: "excalidraw-converter:mode",
+  theme: "excalidraw-converter:theme",
 } as const;
 
 function loadFromStorage<T>(key: string, fallback: T): T {
@@ -30,6 +32,15 @@ function loadFromStorage<T>(key: string, fallback: T): T {
 }
 
 export function ConverterApp() {
+  const getInitialTheme = useCallback((): ThemeMode => {
+    const stored = loadFromStorage<ThemeMode | null>(STORAGE_KEYS.theme, null);
+    if (stored) return stored;
+    if (typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches) {
+      return "dark";
+    }
+    return "light";
+  }, []);
+
   const [inputMode, setInputMode] = useState<InputMode>(() =>
     loadFromStorage<InputMode>(STORAGE_KEYS.mode, "text"),
   );
@@ -41,6 +52,7 @@ export function ConverterApp() {
   const [summary, setSummary] = useState<string | null>(null);
   const [sidebarWidth, setSidebarWidth] = useState(DEFAULT_WIDTH);
   const isResizing = useRef(false);
+  const [theme, setTheme] = useState<ThemeMode>(getInitialTheme);
 
   const [pendingText, setPendingText] = useState<string | null>(() =>
     loadFromStorage<string | null>(STORAGE_KEYS.text, null),
@@ -60,6 +72,10 @@ export function ConverterApp() {
   useEffect(() => {
     localStorage.setItem(STORAGE_KEYS.text, JSON.stringify(pendingText));
   }, [pendingText]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.theme, JSON.stringify(theme));
+  }, [theme]);
 
   // Resize handler
   useEffect(() => {
@@ -102,6 +118,10 @@ export function ConverterApp() {
     }, 1000);
     return () => clearInterval(timer);
   }, [isConverting]);
+
+  const toggleTheme = useCallback(() => {
+    setTheme((prev) => (prev === "light" ? "dark" : "light"));
+  }, []);
 
   const handleConvert = useCallback(async () => {
     setError(null);
@@ -175,20 +195,28 @@ export function ConverterApp() {
     (inputMode === "image" && pendingImage);
 
   return (
-    <div className="flex h-screen bg-white font-sans">
-      {/* Left sidebar — Excalidraw-style light theme */}
+    <div className="converter-root flex h-screen font-sans" data-theme={theme}>
+      {/* Left sidebar */}
       <aside
-        className="flex flex-shrink-0 flex-col border-r border-[#e2e2e2] bg-[#f8f9fa]"
+        className="converter-sidebar flex flex-shrink-0 flex-col"
         style={{ width: sidebarWidth }}
       >
         {/* Header */}
-        <div className="px-4 pb-3 pt-4">
-          <h1 className="text-[15px] font-semibold text-[#1b1b1f]">
-            Excalidraw Converter
-          </h1>
-          <p className="mt-0.5 text-[11px] text-[#8b8b8b]">
-            Turn anything into editable diagrams
-          </p>
+        <div className="flex items-start justify-between gap-3 px-4 pb-3 pt-4">
+          <div>
+            <h1 className="converter-heading text-[15px] font-semibold">Excalidraw Converter</h1>
+            <p className="converter-subheading mt-0.5 text-[11px]">Turn anything into editable diagrams</p>
+          </div>
+          <button
+            type="button"
+            onClick={toggleTheme}
+            className="converter-toggle"
+            aria-pressed={theme === "dark"}
+            aria-label="Toggle dark mode"
+          >
+            {theme === "dark" ? <MoonStar className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+            <span className="converter-toggle__label text-[11px] font-medium">{theme === "dark" ? "Dark" : "Light"}</span>
+          </button>
         </div>
 
         {/* Mode tabs — pill style matching Excalidraw toolbar */}
@@ -197,10 +225,8 @@ export function ConverterApp() {
             <button
               key={key}
               onClick={() => setInputMode(key)}
-              className={`flex items-center gap-1.5 rounded-lg px-3 py-[6px] text-[12px] font-medium transition-all ${
-                inputMode === key
-                  ? "bg-[#6965db] text-white shadow-sm"
-                  : "bg-white text-[#5b5b5b] shadow-[0_0_0_1px_#e2e2e2] hover:bg-[#ececf4] hover:text-[#1b1b1f]"
+              className={`converter-tab flex items-center gap-1.5 rounded-lg px-3 py-[6px] text-[12px] font-medium transition-all ${
+                inputMode === key ? "is-active" : ""
               }`}
             >
               <Icon className="h-3.5 w-3.5" />
@@ -210,7 +236,7 @@ export function ConverterApp() {
         </div>
 
         {/* Divider */}
-        <div className="mx-4 border-t border-[#e2e2e2]" />
+        <div className="converter-divider mx-4 border-t" />
 
         {/* Input area */}
         <div className="flex-1 overflow-y-auto px-4 py-3">
@@ -221,7 +247,7 @@ export function ConverterApp() {
 
         {/* Error */}
         {error && (
-          <div className="mx-4 mb-2 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-[12px] text-red-600">
+          <div className="converter-card converter-card--error mx-4 mb-2 flex items-start gap-2 rounded-lg px-3 py-2 text-[12px]">
             <AlertCircle className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" />
             <span>{error}</span>
           </div>
@@ -229,7 +255,7 @@ export function ConverterApp() {
 
         {/* Summary */}
         {summary && !error && (
-          <div className="mx-4 mb-2 rounded-lg border border-[#d4d4f7] bg-[#ececf4] px-3 py-2 text-[12px] text-[#5b5b5b]">
+          <div className="converter-card converter-card--info mx-4 mb-2 rounded-lg px-3 py-2 text-[12px]">
             {summary}
           </div>
         )}
@@ -239,10 +265,8 @@ export function ConverterApp() {
           <button
             onClick={handleConvert}
             disabled={isConverting || !hasInput}
-            className={`flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-[13px] font-semibold transition-all ${
-              isConverting || !hasInput
-                ? "cursor-not-allowed bg-[#e2e2e2] text-[#aaa]"
-                : "bg-[#6965db] text-white shadow-sm hover:bg-[#5b57d1] active:scale-[0.98]"
+            className={`converter-primary flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-[13px] font-semibold transition-all ${
+              isConverting || !hasInput ? "is-disabled" : ""
             }`}
           >
             {isConverting ? (
@@ -263,14 +287,14 @@ export function ConverterApp() {
       {/* Resize handle */}
       <div
         onMouseDown={startResize}
-        className="group flex w-[6px] cursor-col-resize items-center justify-center hover:bg-[#6965db]/10 active:bg-[#6965db]/20"
+        className="converter-resize group flex w-[6px] cursor-col-resize items-center justify-center"
       >
-        <GripVertical className="h-4 w-4 text-[#ccc] group-hover:text-[#6965db]" />
+        <GripVertical className="h-4 w-4" />
       </div>
 
       {/* Right — Excalidraw editor */}
       <main className="flex-1">
-        <ExcalidrawWrapper elements={elements} onChange={handleElementsChange} />
+        <ExcalidrawWrapper elements={elements} onChange={handleElementsChange} theme={theme} />
       </main>
     </div>
   );
