@@ -56,7 +56,7 @@ export function ExcalidrawWrapper({ elements, onChange, theme = "light" }: Excal
     <div className="relative h-full w-full">
       {elements.length === 0 && (
         <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
-          <p className="rounded-xl bg-white/80 px-6 py-3 text-sm text-gray-400 shadow-sm backdrop-blur">
+          <p className="converter-empty-state rounded-xl px-6 py-3 text-sm shadow-sm backdrop-blur">
             Upload something to generate a diagram
           </p>
         </div>

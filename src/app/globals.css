@@ -12,7 +12,8 @@
 	transition: background-color var(--converter-transition), color var(--converter-transition);
 }
 
-.converter-root[data-theme="light"] {
+.converter-root[data-theme="light"],
+html[data-theme="light"] {
 	--converter-app-bg: #ffffff;
 	--converter-surface: #f8f9fa;
 	--converter-surface-alt: #ececf4;
@@ -43,7 +44,8 @@
 	--converter-handle-icon-hover: #6965db;
 }
 
-.converter-root[data-theme="dark"] {
+.converter-root[data-theme="dark"],
+html[data-theme="dark"] {
 	--converter-app-bg: #121212;
 	--converter-surface: #232329;
 	--converter-surface-alt: #2a2834;
@@ -192,4 +194,13 @@
 .converter-resize:hover svg,
 .converter-resize:active svg {
 	color: var(--converter-handle-icon-hover);
+}
+
+.converter-empty-state {
+	background-color: rgba(255, 255, 255, 0.8);
+	color: var(--converter-muted, #9ca3af);
+}
+
+[data-theme="dark"] .converter-empty-state {
+	background-color: rgba(35, 35, 41, 0.8);
 }

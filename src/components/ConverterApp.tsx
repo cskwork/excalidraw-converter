@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect } from "react";
-import { Sparkles, AlertCircle, Type, FileUp, ImageIcon, GripVertical, Sun, MoonStar } from "lucide-react";
+import { Sparkles, AlertCircle, Type, FileUp, ImageIcon, GripVertical, Sun, Moon } from "lucide-react";
 import { TextInput } from "./TextInput";
 import { FileUpload } from "./FileUpload";
 import { ImageUpload } from "./ImageUpload";
@@ -21,6 +21,8 @@ const STORAGE_KEYS = {
   theme: "excalidraw-converter:theme",
 } as const;
 
+const VALID_THEMES = new Set<ThemeMode>(["light", "dark"]);
+
 function loadFromStorage<T>(key: string, fallback: T): T {
   if (typeof window === "undefined") return fallback;
   try {
@@ -31,15 +33,16 @@ function loadFromStorage<T>(key: string, fallback: T): T {
   }
 }
 
+function getInitialTheme(): ThemeMode {
+  const stored = loadFromStorage<string | null>(STORAGE_KEYS.theme, null);
+  if (stored && VALID_THEMES.has(stored as ThemeMode)) return stored as ThemeMode;
+  if (typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches) {
+    return "dark";
+  }
+  return "light";
+}
+
 export function ConverterApp() {
-  const getInitialTheme = useCallback((): ThemeMode => {
-    const stored = loadFromStorage<ThemeMode | null>(STORAGE_KEYS.theme, null);
-    if (stored) return stored;
-    if (typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches) {
-      return "dark";
-    }
-    return "light";
-  }, []);
 
   const [inputMode, setInputMode] = useState<InputMode>(() =>
     loadFromStorage<InputMode>(STORAGE_KEYS.mode, "text"),
@@ -75,6 +78,7 @@ export function ConverterApp() {
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEYS.theme, JSON.stringify(theme));
+    document.documentElement.setAttribute("data-theme", theme);
   }, [theme]);
 
   // Resize handler
@@ -212,10 +216,10 @@ export function ConverterApp() {
             onClick={toggleTheme}
             className="converter-toggle"
             aria-pressed={theme === "dark"}
-            aria-label="Toggle dark mode"
+            aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
           >
-            {theme === "dark" ? <MoonStar className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
-            <span className="converter-toggle__label text-[11px] font-medium">{theme === "dark" ? "Dark" : "Light"}</span>
+            {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            <span className="converter-toggle__label text-[11px] font-medium">{theme === "dark" ? "Light" : "Dark"}</span>
           </button>
         </div>
 
@@ -271,7 +275,7 @@ export function ConverterApp() {
           >
             {isConverting ? (
               <>
-                <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current/30 border-t-current" />
                 Converting… {elapsedSec > 0 && `${elapsedSec}s`}
               </>
             ) : (
@@ -287,7 +291,7 @@ export function ConverterApp() {
       {/* Resize handle */}
       <div
         onMouseDown={startResize}
-        className="converter-resize group flex w-[6px] cursor-col-resize items-center justify-center"
+        className="converter-resize flex w-[6px] cursor-col-resize items-center justify-center"
       >
         <GripVertical className="h-4 w-4" />
       </div>
