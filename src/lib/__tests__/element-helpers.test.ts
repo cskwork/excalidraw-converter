@@ -17,9 +17,9 @@ describe("generateId", () => {
     expect(generateId()).toHaveLength(8);
   });
 
-  it("contains only alphanumeric characters", () => {
+  it("contains only base64url-safe characters", () => {
     const id = generateId();
-    expect(id).toMatch(/^[A-Za-z0-9]{8}$/);
+    expect(id).toMatch(/^[A-Za-z0-9_-]{8}$/);
   });
 
   it("generates unique values on successive calls", () => {
