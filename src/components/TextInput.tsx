@@ -1,37 +1,37 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { forwardRef } from "react";
 
 interface TextInputProps {
-  onSubmit: (text: string) => void;
-  initialValue?: string;
+  value: string;
+  onChange: (text: string) => void;
+  maxLength: number;
 }
 
-export function TextInput({ onSubmit, initialValue = "" }: TextInputProps) {
-  const [text, setText] = useState(initialValue);
-
-  const handleChange = useCallback(
-    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-      setText(e.target.value);
-    },
-    [],
-  );
-
-  useEffect(() => {
-    onSubmit(text);
-  }, [text, onSubmit]);
-
+export const TextInput = forwardRef<HTMLTextAreaElement, TextInputProps>(function TextInput(
+  { value, onChange, maxLength },
+  ref,
+) {
+  const over = value.length > maxLength;
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-1.5">
+      <label htmlFor="converter-text" className="converter-legend">
+        Describe the diagram
+      </label>
       <textarea
-        value={text}
-        onChange={handleChange}
+        id="converter-text"
+        ref={ref}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
         placeholder="Paste any text — meeting notes, code, documentation, lists..."
-        className="h-52 w-full resize-none rounded-lg border border-[#e2e2e2] bg-white px-3 py-2.5 text-[13px] text-[#1b1b1f] placeholder-[#aaa] transition-all focus:border-[#6965db] focus:outline-none focus:ring-1 focus:ring-[#6965db]/30"
+        className="converter-well converter-textarea"
+        spellCheck
+        aria-describedby="converter-text-count"
       />
-      <div className="text-right text-[11px] text-[#aaa]">
-        {text.length.toLocaleString()} characters
+      <div id="converter-text-count" className={`converter-meter ${over ? "is-over" : ""}`}>
+        {value.length.toLocaleString()} characters
+        {over && <span> · only the first {maxLength.toLocaleString()} are used</span>}
       </div>
     </div>
   );
-}
+});

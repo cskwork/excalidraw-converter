@@ -1,12 +1,27 @@
-import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import type { Metadata, Viewport } from "next";
+import { Hanken_Grotesk, Martian_Mono } from "next/font/google";
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"] });
+const body = Hanken_Grotesk({ subsets: ["latin"], variable: "--font-body", display: "swap" });
+const legend = Martian_Mono({ subsets: ["latin"], variable: "--font-legend", display: "swap" });
+
+const title = "Excalidraw Converter — Turn anything into diagrams";
+const description =
+  "Convert text, documents and images into editable Excalidraw diagrams with the Claude Agent SDK.";
 
 export const metadata: Metadata = {
-  title: "Excalidraw Converter — Turn anything into diagrams",
-  description: "Convert text, images, and ideas into Excalidraw diagrams",
+  metadataBase: new URL("https://excalidraw-converter.vercel.app"),
+  title,
+  description,
+  openGraph: { title, description, type: "website", siteName: "Excalidraw Converter" },
+  twitter: { card: "summary_large_image", title, description },
+};
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#d3cec4" },
+    { media: "(prefers-color-scheme: dark)", color: "#2d3135" },
+  ],
 };
 
 export default function RootLayout({
@@ -15,8 +30,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={inter.className}>{children}</body>
+    <html lang="en" className={`${body.variable} ${legend.variable}`}>
+      <body className={body.className}>{children}</body>
     </html>
   );
 }
