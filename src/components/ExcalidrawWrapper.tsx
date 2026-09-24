@@ -34,40 +34,67 @@ interface ExcalidrawWrapperProps {
 
 export function ExcalidrawWrapper({ scene, hasContent, visible, onChange, theme = "light" }: ExcalidrawWrapperProps) {
   const [excalidrawAPI, setExcalidrawAPI] = useState<ExcalidrawImperativeAPI | null>(null);
+  // Excalidraw hands out its API from its constructor, then loads its initial
+  // (empty) scene asynchronously and resets history. A scene placed before that
+  // finishes is wiped, so placement waits for the first change event, which
+  // Excalidraw only emits once loading is done.
+  const [editorReady, setEditorReady] = useState(false);
   const appliedNonce = useRef<number | null>(null);
   const pendingFit = useRef(false);
+  const visibleRef = useRef(visible);
+  visibleRef.current = visible;
 
   const handleRef = useCallback((api: ExcalidrawImperativeAPI) => {
     setExcalidrawAPI(api);
   }, []);
 
-  const fitToContent = useCallback(() => {
-    if (!excalidrawAPI) return;
+  // Fit a freshly placed scene once the canvas is shown and Excalidraw has
+  // measured it. A canvas that was hidden reports a 0x0 viewport until its
+  // resize observation arrives, and fitting to that leaves the diagram as a
+  // speck in the corner, so this waits for real dimensions instead of a timer.
+  const tryFit = useCallback(() => {
+    if (!excalidrawAPI || !pendingFit.current || !visibleRef.current) return;
+    const { width, height } = excalidrawAPI.getAppState();
+    if (width <= 0 || height <= 0) return;
     pendingFit.current = false;
-    const fit = () => {
-      const elements = excalidrawAPI.getSceneElements();
-      if (elements.length === 0) return;
-      excalidrawAPI.scrollToContent(elements, { fitToViewport: true, viewportZoomFactor: 0.85 });
-    };
-    fit();
-    // Fit again once a container that just became visible has been measured.
-    // A timer (not rAF) so it still runs when the tab is in the background.
-    setTimeout(fit, 120);
+    const elements = excalidrawAPI.getSceneElements();
+    if (elements.length === 0) return;
+    excalidrawAPI.scrollToContent(elements, { fitToViewport: true, viewportZoomFactor: 0.85 });
   }, [excalidrawAPI]);
 
-  // Place a requested scene exactly once per nonce.
+  // Every state change (including the viewport measurement) is a chance to
+  // finish a pending fit. Deferred so the fit's own state update runs outside
+  // Excalidraw's update cycle.
   useEffect(() => {
-    if (!excalidrawAPI || !scene || appliedNonce.current === scene.nonce) return;
+    if (!excalidrawAPI) return;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const unsubscribe = excalidrawAPI.onChange(() => {
+      setEditorReady(true);
+      if (!pendingFit.current || timer) return;
+      timer = setTimeout(() => {
+        timer = null;
+        tryFit();
+      }, 0);
+    });
+    return () => {
+      unsubscribe();
+      if (timer) clearTimeout(timer);
+    };
+  }, [excalidrawAPI, tryFit]);
+
+  // Place a requested scene exactly once per nonce, after the editor has loaded.
+  useEffect(() => {
+    if (!excalidrawAPI || !editorReady || !scene || appliedNonce.current === scene.nonce) return;
     appliedNonce.current = scene.nonce;
     excalidrawAPI.updateScene({ elements: scene.elements as SceneElements });
-    if (visible) fitToContent();
-    else pendingFit.current = true;
-  }, [excalidrawAPI, scene, visible, fitToContent]);
+    pendingFit.current = true;
+    tryFit();
+  }, [excalidrawAPI, editorReady, scene, tryFit]);
 
   // A scene placed while the canvas was hidden gets fitted once it is shown.
   useEffect(() => {
-    if (visible && pendingFit.current) fitToContent();
-  }, [visible, fitToContent]);
+    if (visible) tryFit();
+  }, [visible, tryFit]);
 
   const handleChange = useCallback(
     (updatedElements: readonly Record<string, unknown>[]) => {
