@@ -1,0 +1,195 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-24T08:47:56.055498+00:00",
+  "title": "Design System: Excalidraw Converter",
+  "extensions": {
+    "colorMeta": {
+      "safety-orange": {
+        "role": "primary",
+        "displayName": "Safety Orange",
+        "tonalRamp": [
+          "#4a1d00",
+          "#7a3000",
+          "#a84300",
+          "#d45500",
+          "#ff6a00",
+          "#ff8a3d",
+          "#ffb07a",
+          "#ffd8bd"
+        ]
+      },
+      "lcd-amber": {
+        "role": "secondary",
+        "displayName": "LCD Amber",
+        "tonalRamp": [
+          "#3d2604",
+          "#6b4309",
+          "#9a620f",
+          "#c98118",
+          "#f4a93a",
+          "#f7bf6a",
+          "#fad59b",
+          "#fdeacd"
+        ]
+      },
+      "putty-chassis": {
+        "role": "neutral",
+        "displayName": "Putty Chassis",
+        "tonalRamp": [
+          "#2a2723",
+          "#47433c",
+          "#655f56",
+          "#847d72",
+          "#a39c90",
+          "#bfb9ad",
+          "#d3cec4",
+          "#ece9e3"
+        ]
+      },
+      "gunmetal-chassis": {
+        "role": "neutral",
+        "displayName": "Gunmetal Chassis",
+        "tonalRamp": [
+          "#0f1112",
+          "#1d2023",
+          "#2d3135",
+          "#3f4449",
+          "#555b61",
+          "#6e757c",
+          "#8f959b",
+          "#c2c6ca"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "wordmark": {
+        "displayName": "Wordmark",
+        "purpose": "Product name on the chassis plate."
+      },
+      "legend": {
+        "displayName": "Legend",
+        "purpose": "Keycap legends, field labels, codes and meters."
+      },
+      "lcd-readout": {
+        "displayName": "Readout",
+        "purpose": "Status word and clock in the amber window."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Text field content and anything read as prose."
+      },
+      "caption": {
+        "displayName": "Caption",
+        "purpose": "Status detail, hints and messages."
+      }
+    },
+    "shadows": [
+      {
+        "name": "key-rest",
+        "value": "inset 0 -3px 0 #bcb5a7, inset 0 1px 0 rgba(255,255,255,.6), 0 1px 1px rgba(0,0,0,.25), 0 4px 8px -3px rgba(0,0,0,.35)",
+        "purpose": "Keycap at rest."
+      },
+      {
+        "name": "key-pressed",
+        "value": "inset 0 -1px 0 #bcb5a7, 0 1px 2px -1px rgba(0,0,0,.3)",
+        "purpose": "Pressed or selected key, with translateY(2px)."
+      },
+      {
+        "name": "well",
+        "value": "inset 0 1px 2px rgba(40,34,26,.22), inset 0 0 0 1px rgba(40,34,26,.14)",
+        "purpose": "Recessed text field and drop bays (light)."
+      }
+    ],
+    "motion": [
+      {
+        "name": "key-travel",
+        "value": "90ms cubic-bezier(0.22, 1, 0.36, 1)",
+        "purpose": "Key press travel."
+      },
+      {
+        "name": "state",
+        "value": "150ms cubic-bezier(0.22, 1, 0.36, 1)",
+        "purpose": "Color and theme transitions."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "panel-split",
+        "value": "768px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Commit Key",
+      "kind": "button",
+      "refersTo": "button-commit",
+      "description": "The single orange action: Convert to Diagram.",
+      "html": "<button class=\"ds-commit\"><span>Convert to Diagram</span><kbd class=\"ds-kbd\">Cmd+Enter</kbd></button>",
+      "css": ".ds-commit{display:flex;width:320px;align-items:center;justify-content:space-between;min-height:54px;padding:0 16px;border:0;border-radius:9px;background:#ff6a00;color:#1a0e05;font-family:'Martian Mono',monospace;font-size:12px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;box-shadow:inset 0 -4px 0 #b84800,inset 0 1px 0 rgba(255,220,190,.6),0 1px 1px rgba(0,0,0,.3),0 8px 16px -6px rgba(160,60,0,.55);transition:transform 90ms,box-shadow 90ms}.ds-commit:hover{background:#ff7a1a}.ds-commit:active{transform:translateY(3px);background:#e85f00;box-shadow:inset 0 -1px 0 #b84800,0 2px 4px -2px rgba(160,60,0,.5)}.ds-commit:focus-visible{outline:2px solid #b54700;outline-offset:2px}.ds-kbd{font-size:10px;padding:3px 6px;border-radius:4px;background:rgba(26,14,5,.12);text-transform:none}"
+    },
+    {
+      "name": "Mode Key",
+      "kind": "button",
+      "refersTo": "button-key",
+      "description": "Tab-role keycap with an amber LED when selected.",
+      "html": "<button class=\"ds-key is-active\"><span class=\"ds-led\"></span>Text</button>",
+      "css": ".ds-key{position:relative;display:inline-flex;align-items:center;justify-content:center;min-width:96px;min-height:58px;border:0;border-radius:7px;background:#f1eee7;color:#1e2124;font-family:'Martian Mono',monospace;font-size:11px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;box-shadow:inset 0 -3px 0 #bcb5a7,inset 0 1px 0 rgba(255,255,255,.6),0 1px 1px rgba(0,0,0,.25),0 4px 8px -3px rgba(0,0,0,.35);transition:transform 90ms,box-shadow 90ms}.ds-key:hover{background:#f8f6f1}.ds-key:active,.ds-key.is-active{transform:translateY(2px);box-shadow:inset 0 -1px 0 #bcb5a7,0 1px 2px -1px rgba(0,0,0,.3)}.ds-key.is-active{font-weight:700}.ds-key:focus-visible{outline:2px solid #b54700;outline-offset:2px}.ds-led{position:absolute;top:7px;right:8px;width:6px;height:6px;border-radius:999px;background:#9d978b}.ds-key.is-active .ds-led{background:#ffb020;box-shadow:0 0 6px 1px rgba(255,176,32,.75)}"
+    },
+    {
+      "name": "Status Window",
+      "kind": "custom",
+      "refersTo": "status-window",
+      "description": "Amber readout naming the current state with a clock.",
+      "html": "<div class=\"ds-lcd\"><div class=\"ds-glass\"><div class=\"ds-row\"><b>READY</b><span>00:00</span></div><p>Input loaded. Press Convert or Cmd+Enter.</p></div></div>",
+      "css": ".ds-lcd{width:320px;padding:6px;border-radius:10px;background:#2b2e31}.ds-glass{padding:10px 12px;border-radius:5px;background:linear-gradient(180deg,#f8b347,#f4a93a 45%,#e29426);color:#2a1804;box-shadow:inset 0 2px 6px rgba(80,40,0,.35);font-family:'Martian Mono',monospace}.ds-row{display:flex;justify-content:space-between;font-size:20px;letter-spacing:.06em}.ds-glass p{margin:6px 0 0;font-family:'Hanken Grotesk',sans-serif;font-size:12.5px;font-weight:500}"
+    },
+    {
+      "name": "Input Well",
+      "kind": "input",
+      "refersTo": "input-well",
+      "description": "Recessed text field with orange caret.",
+      "html": "<textarea class=\"ds-well\" placeholder=\"Paste any text\"></textarea>",
+      "css": ".ds-well{width:320px;height:120px;padding:10px 12px;border:0;border-radius:6px;background:#f8f7f3;color:#1e2124;font-family:'Hanken Grotesk',sans-serif;font-size:14px;line-height:1.5;caret-color:#ff6a00;box-shadow:inset 0 1px 2px rgba(40,34,26,.22),inset 0 0 0 1px rgba(40,34,26,.14)}.ds-well::placeholder{color:#6b675f}.ds-well:focus-visible{outline:2px solid #b54700;outline-offset:1px}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The desk instrument that plots onto paper",
+    "overview": "The input panel is a small hardware instrument parked beside the Excalidraw canvas. Mode keys pick what you feed it, an amber status window reports what it is doing in plain words, and one safety-orange key commits. The canvas stays Excalidraw's own paper: the instrument never draws on it, it only places a diagram there.",
+    "keyCharacteristics": [
+      "Real controls rendered as keycaps: flat tops, a shaded skirt, 2-3px of travel on press.",
+      "Exactly one orange element on screen, and it is the action that commits.",
+      "State is always named in words (IDLE, READY, WORKING, PLOTTED, FAULT), never by color alone.",
+      "Wide mono legends for labels and readouts; a quiet grotesk for anything a person reads as prose."
+    ],
+    "rules": [
+      {
+        "name": "The One Orange Key Rule",
+        "body": "Safety Orange appears on one control, the commit key. When Convert is disabled it turns into an ordinary key; orange never marks something you cannot press.",
+        "section": "colors"
+      },
+      {
+        "name": "The Words Not Lights Rule",
+        "body": "Every state the LED or window shows is also written out, so color is never the only signal.",
+        "section": "colors"
+      },
+      {
+        "name": "The Legends Are Measurements Rule",
+        "body": "Mono is used for labels, codes and numbers only. Sentences are always set in Hanken Grotesk.",
+        "section": "typography"
+      }
+    ],
+    "dos": [
+      "Do keep every control a real button, tab or separator with keyboard support; the keycap look is a skin on standard affordances.",
+      "Do name state in words in the status window whenever something changes.",
+      "Do keep the orange for the single commit action.",
+      "Do keep Excalidraw's own editor UI untouched."
+    ],
+    "donts": [
+      "Don't add a second orange element or use orange for decoration.",
+      "Don't set sentences in Martian Mono.",
+      "Don't put kickers or eyebrow labels above headings.",
+      "Don't add glow halos beyond the small mode LED."
+    ]
+  }
+}
