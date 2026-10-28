@@ -8,6 +8,7 @@ import { validateElements, autoLayout } from "@/lib/element-helpers";
 import { assertOAuthAuth } from "@/lib/assert-oauth-auth";
 import { logger } from "@/lib/logger";
 import { validateImageMagicBytes } from "@/lib/magic-bytes";
+import { DOCUMENT_EXTENSIONS } from "@/lib/convert-client";
 import type { InputType, ExcalidrawElement } from "@/types/excalidraw";
 
 // Next.js route segment config — extend default timeout for LLM calls
@@ -30,6 +31,7 @@ const SUPPORTED_TEXT_TYPES: ReadonlySet<string> = new Set([
   "text/html",
   "application/json",
   "application/xml",
+  "text/xml",
 ]);
 
 // MIME -> 안전한 확장자 매핑 (file.name 기반 추출 대신 사용)
@@ -176,10 +178,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     file &&
     inputType === "file" &&
     !SUPPORTED_TEXT_TYPES.has(file.type) &&
-    !file.name.endsWith(".md") &&
-    !file.name.endsWith(".txt") &&
-    !file.name.endsWith(".csv") &&
-    !file.name.endsWith(".json")
+    // Same extension list as the upload panel; browsers often send "" for .md
+    !DOCUMENT_EXTENSIONS.some((ext) => file.name.toLowerCase().endsWith(ext))
   ) {
     return errorResponse(
       `Unsupported file type: ${file.type}. Supported: text, markdown, csv, json, html, xml`,
